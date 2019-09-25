@@ -13,4 +13,9 @@ public class Student {
   public Company[] getCompanies() {
     return companies;
   }
+
+  @Override
+  public String toString(){
+    return name;
+  }
 }

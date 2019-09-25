@@ -20,4 +20,9 @@ public class Company {
   public int getPanels() {
     return panels;
   }
+
+  @Override
+  public String toString(){
+    return name;
+  }
 }
