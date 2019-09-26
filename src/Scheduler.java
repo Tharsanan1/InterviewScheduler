@@ -1,5 +1,9 @@
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -15,16 +19,17 @@ public class Scheduler {
     this.maxRange = maxRange;
   }
 
+
   public static void main(String[] args) {
-
-    // test
-
     CSVReader csvReader =
         new CSVReader("/home/tharsanan/Projects/InterviewScheduler/FinalInterviewSchedule.csv");
     try {
       csvReader.readFromFile();
       ArrayList<StudentCompany> studentCompanyArrayList = new ArrayList<>();
       for (int i = 0; i < csvReader.getStudentList().size(); i++) {
+        if(csvReader.getStudentList().get(i).getCompanies().length == 0){
+          System.out.println(csvReader.getStudentList().get(i).getName());
+        }
         for (int j = 0; j < csvReader.getStudentList().get(i).getCompanies().length; j++) {
           studentCompanyArrayList.add(
               new StudentCompany(
@@ -49,8 +54,64 @@ public class Scheduler {
       } else {
         System.out.println("not found");
       }
+      scheduler.saveAsCSV();
     } catch (IOException e) {
       System.out.println("could not read the file");
+    }
+  }
+
+  public static int countStudent(ArrayList<Assignment> assignments){
+    ArrayList<Student> studentArrayList = new ArrayList<>();
+    for (int i = 0; i < assignments.size(); i++) {
+      Student student = assignments.get(i).getStudentCompany().getStudent();
+      if(!studentArrayList.contains(student)){
+        studentArrayList.add(student);
+      }
+    }
+    return studentArrayList.size();
+  }
+  public static int countStudentPossibilities(StudentCompany[] studentCompanies){
+    ArrayList<Student> studentArrayList = new ArrayList<>();
+    for (int i = 0; i < studentCompanies.length; i++) {
+      Student student = studentCompanies[i].getStudent();
+      if(!studentArrayList.contains(student)){
+        studentArrayList.add(student);
+      }
+    }
+    return studentArrayList.size();
+  }
+
+  public void saveAsCSV() throws FileNotFoundException, UnsupportedEncodingException {
+    ArrayList<Student> studentArrayList = new ArrayList<>();
+    ArrayList<String[]> scheduleList = new ArrayList<>();
+    Collections.sort(assignments, new SortAssignmentByStudentName());
+    for (int i = 0; i < assignments.size(); i++) {
+      Student student = assignments.get(i).getStudentCompany().getStudent();
+      if(!studentArrayList.contains(student)){
+        studentArrayList.add(student);
+        scheduleList.add(new String[33]);
+      }
+      int index = studentArrayList.indexOf(student);
+      scheduleList.get(index)[assignments.get(i).getTimeRange().getTimeStart()/3] = assignments.get(i).getStudentCompany().getCompany().getName() + "_" + assignments.get(i).getPanelNumber();
+    }
+    StringBuilder csvData = new StringBuilder();
+    for (int i = 0; i < studentArrayList.size(); i++) {
+      Student student = studentArrayList.get(i);
+        csvData.append(student.getName());
+      for (int j = 0; j < scheduleList.get(i).length; j++) {
+        if (scheduleList.get(i)[j] != null) {
+          csvData.append("," + scheduleList.get(i)[j]);
+        }
+        else{
+          csvData.append(",");
+        }
+      }
+      csvData.append("\n");
+    }
+    System.out.println("Student size : " + studentArrayList.size());
+    try (PrintWriter writer =
+        new PrintWriter("/home/tharsanan/Projects/InterviewScheduler/test.csv", "UTF-8")) {
+      writer.println(csvData.toString());
     }
   }
 
@@ -65,12 +126,9 @@ public class Scheduler {
   }
 
   public boolean schedule() {
-    if(assignments.size() > maxFind){
-      System.out.println(maxFind);
-      maxFind = assignments.size();
-    }
     StudentCompany studentCompany = getLeastAcceptedStudentCompany();
     if (studentCompany == null) {
+      System.out.println("assignment size: " + assignments.size());
       return true;
     }
     for (int i = 0; i < maxRange + 1; i += studentCompany.getCompany().getTimeUnits()) {
@@ -105,7 +163,7 @@ public class Scheduler {
           if (leastAccepted.getStudent().getCompanies().length
               == studentCompanyPossibilities[i].getStudent().getCompanies().length) {
             if (studentCompanyPossibilities[i].getCompany().getPanels()
-                < leastAccepted.getCompany().getPanels()) {
+                > leastAccepted.getCompany().getPanels()) {
               leastAccepted = studentCompanyPossibilities[i];
             }
           }
