@@ -13,6 +13,7 @@ public class Scheduler {
   private int maxRange;
   private static int maxFind = 0;
   private static ArrayList<Student> studentArrayList;
+  private static ArrayList<String> companyNameList;
 
   public Scheduler(StudentCompany[] studentCompanyPossibilities, int maxRange) {
     this.studentCompanyPossibilities = studentCompanyPossibilities;
@@ -30,6 +31,7 @@ public class Scheduler {
           System.out.println(s);
       }
       studentArrayList = csvReader.getStudentList();
+      companyNameList = csvReader.getCompanyNameList();
       ArrayList<StudentCompany> studentCompanyArrayList = new ArrayList<>();
       for (int i = 0; i < csvReader.getStudentList().size(); i++) {
         if(csvReader.getStudentList().get(i).getCompanies().length == 0){
@@ -42,11 +44,11 @@ public class Scheduler {
                   csvReader.getStudentList().get(i).getCompanies()[j]));
         }
       }
-//      int begin = studentCompanyArrayList.size();
-//      studentCompanyArrayList = modifyAssignmentPriority(studentCompanyArrayList, createOrder());      // priority modification
-//      if(begin != studentCompanyArrayList.size()){
-//        throw new IllegalStateException();
-//      }
+      int begin = studentCompanyArrayList.size();
+      studentCompanyArrayList = modifyAssignmentPriority(studentCompanyArrayList, createOrder());      // priority modification
+      if(begin != studentCompanyArrayList.size()){
+        throw new IllegalStateException();
+      }
       Scheduler scheduler =
           new Scheduler(studentCompanyArrayList.toArray(new StudentCompany[0]), 200);
       boolean scheduled = scheduler.schedule();
@@ -78,11 +80,14 @@ public class Scheduler {
 
   public static void createCSvForStudentCompanyTime(int max, ArrayList<Assignment> assignments){
     ArrayList<String[]> companyNameForEachFiveMin = new ArrayList<>();
+    ArrayList<ArrayList<Assignment>> assignmentListForStudentDataGen = new ArrayList<>();
     Collections.sort(studentArrayList, Comparator.comparing(Student::getName));
     for (int i = 0; i < studentArrayList.size(); i++) {
       companyNameForEachFiveMin.add(new String[max]);
+      assignmentListForStudentDataGen.add(new ArrayList<>());
       for (int j = 0; j < assignments.size(); j++) {
         if(assignments.get(j).getStudentCompany().getStudent().getName().equals(studentArrayList.get(i).getName())){
+          assignmentListForStudentDataGen.get(i).add(assignments.get(j));
           int start = assignments.get(j).getTimeRange().getTimeStart();
           int end = assignments.get(j).getTimeRange().getTimeEnd();
           for(int k = start; k < end; k++) {
@@ -90,22 +95,81 @@ public class Scheduler {
           }
         }
       }
+      Collections.sort(assignmentListForStudentDataGen.get(i), Comparator.comparingInt(k -> k.getTimeRange().getTimeStart()));
     }
     StringBuilder csvData = new StringBuilder();
     csvData.append("start");
     for (int i = 0; i < max; i++) {
-      csvData.append(","+ i*5 + " - " + (i+1)*5);
+      csvData.append(",").append(i * 5).append(" - ").append((i + 1) * 5);
     }
     csvData.append('\n');
     for (int i = 0; i < studentArrayList.size(); i++) {
       csvData.append(studentArrayList.get(i).getName());
       for (int j = 0; j < companyNameForEachFiveMin.get(i).length; j++) {
-        csvData.append("," + companyNameForEachFiveMin.get(i)[j]);
+        csvData.append(",").append(companyNameForEachFiveMin.get(i)[j]);
       }
       csvData.append("\n");
     }
+    if(studentArrayList.size() != assignmentListForStudentDataGen.size()){
+      throw new IllegalStateException();
+    }
+    ArrayList<String> studentSpecificDataStrings = new ArrayList<>();
+    for (int i = 0; i < studentArrayList.size(); i++) {
+      StringBuilder studentSpecData = new StringBuilder();
+      for (int j = 0; j < assignmentListForStudentDataGen.get(i).size(); j++) {
+        Assignment localAssignment = assignmentListForStudentDataGen.get(i).get(j);
+        studentSpecData.append(localAssignment.getTimeRange().getTimeStart()).append(" - ").append(localAssignment.getTimeRange().getTimeEnd()).append(",").append(localAssignment.getStudentCompany().getCompany().getName()).append(" - panel : ").append(localAssignment.getPanelNumber()).append("\n");
+      }
+      studentSpecificDataStrings.add(studentSpecData.toString());
+    }
+    for (int i = 0; i < studentArrayList.size(); i++) {
+      try (PrintWriter writer =
+               new PrintWriter("/home/tharsanan/Projects/InterviewScheduler/student_data/"+ studentArrayList.get(i).getName() + ".csv", "UTF-8")) {
+        writer.println(studentSpecificDataStrings.get(i));
+      } catch (FileNotFoundException | UnsupportedEncodingException e) {
+        e.printStackTrace();
+      }
+    }
+
+    ArrayList<ArrayList<Assignment>> assignmentListForCompanyDataGen = new ArrayList<>();
+    for (int i = 0; i < companyNameList.size(); i++) {
+      assignmentListForCompanyDataGen.add(new ArrayList<>());
+      for (int j = 0; j < assignments.size(); j++) {
+        if(assignments.get(j).getStudentCompany().getCompany().getName().equals(companyNameList.get(i))){
+          assignmentListForCompanyDataGen.get(i).add(assignments.get(j));
+        }
+      }
+      Collections.sort(assignmentListForCompanyDataGen.get(i), Comparator.comparingInt(k -> k.getTimeRange().getTimeStart()));
+    }
+
+    ArrayList<String> companySpecificDataStrings = new ArrayList<>();
+    if(companyNameList.size() != assignmentListForCompanyDataGen.size()){
+      throw new IllegalStateException();
+    }
+    for (int i = 0; i < companyNameList.size(); i++) {
+      StringBuilder companySpecData = new StringBuilder();
+      for (int j = 0; j < assignmentListForCompanyDataGen.get(i).size(); j++) {
+        Assignment localAssignment = assignmentListForCompanyDataGen.get(i).get(j);
+        companySpecData.append(localAssignment.getTimeRange().getTimeStart()).append(" - ").append(localAssignment.getTimeRange().getTimeEnd()).append(",").append(localAssignment.getStudentCompany().getStudent().getName()).append(" - panel : ").append(localAssignment.getPanelNumber()).append("\n");
+      }
+      companySpecificDataStrings.add(companySpecData.toString());
+    }
+    for (int i = 0; i < companyNameList.size(); i++) {
+      try (PrintWriter writer =
+          new PrintWriter(
+              "/home/tharsanan/Projects/InterviewScheduler/company_data/"
+                  + companyNameList.get(i)
+                  + ".csv",
+              "UTF-8")) {
+        writer.println(companySpecificDataStrings.get(i));
+      } catch (FileNotFoundException | UnsupportedEncodingException e) {
+        e.printStackTrace();
+      }
+    }
+
+
     try (PrintWriter writer =
-             new PrintWriter("/home/tharsanan/Projects/InterviewScheduler/testNew.csv", "UTF-8")) {
+             new PrintWriter("/home/tharsanan/Projects/InterviewScheduler/companyVSstudent.csv", "UTF-8")) {
       writer.println(csvData.toString());
     } catch (FileNotFoundException | UnsupportedEncodingException e) {
       e.printStackTrace();
@@ -178,7 +242,7 @@ public class Scheduler {
   }
 
   public boolean schedule() {
-    StudentCompany studentCompany = getLeastAcceptedStudentCompany();      // modified line
+    StudentCompany studentCompany = getNotAcceptedStudentCompany();      // modified line
     if (studentCompany == null) {
       System.out.println("assignment size: " + assignments.size());
       return true;
@@ -225,6 +289,17 @@ public class Scheduler {
     return leastAccepted;
   }
 
+  public StudentCompany getNotAcceptedStudentCompany() {
+    StudentCompany leastAccepted = null;
+    for (int i = 0; i < studentCompanyPossibilities.length; i++) {
+      if (!studentCompanyPossibilities[i].isAssigned()) {
+        leastAccepted = studentCompanyPossibilities[i];
+        break;
+      }
+    }
+    return leastAccepted;
+  }
+
   public StudentCompany getLeastAcceptedStudentCompanyModify() {
     StudentCompany leastAccepted = null;
     for (int i = 0; i < studentCompanyPossibilities.length; i++) {
@@ -260,6 +335,9 @@ public class Scheduler {
   }
 
   public boolean isValid(Assignment assignment) {
+    if(assignment.getStudentCompany().getCompany().getName().contains("ACCELAERO") && assignment.getStudentCompany().getStudent().getName().toLowerCase().contains("tharsanan")){
+      System.out.println("");
+    }
     for (Assignment assignmentLocal : assignments) {
       if (assignment
           .getStudentCompany()

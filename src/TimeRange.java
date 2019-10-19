@@ -20,7 +20,13 @@ public class TimeRange {
     if(timeRange.getTimeStart() >= timeRange1.getTimeStart() && timeRange.getTimeStart() < timeRange1.getTimeEnd()){
       return true;
     }
-    else if(timeRange.getTimeEnd() > timeRange1.getTimeStart() && timeRange.getTimeEnd() <= timeRange1.getTimeEnd()){
+    if(timeRange.getTimeEnd() > timeRange1.getTimeStart() && timeRange.getTimeEnd() <= timeRange1.getTimeEnd()){
+      return true;
+    }
+    if(timeRange.getTimeStart() < timeRange1.getTimeStart() && timeRange1.getTimeStart() < timeRange.getTimeEnd()){
+      return true;
+    }
+    if(timeRange1.getTimeStart() < timeRange.getTimeStart() && timeRange.getTimeStart() < timeRange1.getTimeEnd()){
       return true;
     }
     return false;
@@ -30,7 +36,13 @@ public class TimeRange {
     if(timeRange.getTimeStart() >= timeRange1.getTimeStart() && timeRange.getTimeStart() < timeRange1.getTimeEnd()){
       return true;
     }
-    else if(timeRange.getTimeEnd() > timeRange1.getTimeStart() && timeRange.getTimeEnd() <= timeRange1.getTimeEnd()){
+    if(timeRange.getTimeEnd() > timeRange1.getTimeStart() && timeRange.getTimeEnd() <= timeRange1.getTimeEnd()){
+      return true;
+    }
+    if(timeRange.getTimeStart() <= timeRange1.getTimeStart() && timeRange1.getTimeStart() <= timeRange.getTimeEnd()){
+      return true;
+    }
+    if(timeRange1.getTimeStart() <= timeRange.getTimeStart() && timeRange.getTimeStart() <= timeRange1.getTimeEnd()){
       return true;
     }
     if(timeRange.getTimeStart() < timeRange1.getTimeStart()){ // timeRange starts before timeRange1
@@ -44,6 +56,12 @@ public class TimeRange {
       }
     }
     return false;
+  }
+
+  public static void main(String[] args) {
+    boolean b = clashesStudent(new TimeRange(9,18), new TimeRange(12,16));
+    System.out.println(b);
+
   }
 
   @Override
