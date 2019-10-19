@@ -2,8 +2,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public class CSVReader {
   private String path;
@@ -16,7 +14,7 @@ public class CSVReader {
   }
 
   public void readFromFile() throws IOException {
-    String row = null;
+    String row;
     boolean isFirstRow = true;
     try(FileReader fileReader = new FileReader(path)){
       try(BufferedReader csvReader = new BufferedReader(fileReader)){

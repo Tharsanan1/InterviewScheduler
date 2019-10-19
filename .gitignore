@@ -2,3 +2,6 @@ out
 .idea
 InterviewScheduler.iml
 FinalInterviewSchedule.csv
+.*.csv*
+test.csv
+test2019.csv
