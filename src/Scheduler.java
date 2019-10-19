@@ -42,6 +42,11 @@ public class Scheduler {
                   csvReader.getStudentList().get(i).getCompanies()[j]));
         }
       }
+//      int begin = studentCompanyArrayList.size();
+//      studentCompanyArrayList = modifyAssignmentPriority(studentCompanyArrayList, createOrder());      // priority modification
+//      if(begin != studentCompanyArrayList.size()){
+//        throw new IllegalStateException();
+//      }
       Scheduler scheduler =
           new Scheduler(studentCompanyArrayList.toArray(new StudentCompany[0]), 200);
       boolean scheduled = scheduler.schedule();
@@ -173,7 +178,7 @@ public class Scheduler {
   }
 
   public boolean schedule() {
-    StudentCompany studentCompany = getLeastAcceptedStudentCompany();
+    StudentCompany studentCompany = getLeastAcceptedStudentCompany();      // modified line
     if (studentCompany == null) {
       System.out.println("assignment size: " + assignments.size());
       return true;
@@ -220,6 +225,40 @@ public class Scheduler {
     return leastAccepted;
   }
 
+  public StudentCompany getLeastAcceptedStudentCompanyModify() {
+    StudentCompany leastAccepted = null;
+    for (int i = 0; i < studentCompanyPossibilities.length; i++) {
+      if (!studentCompanyPossibilities[i].isAssigned()) {
+        if(containsUs(studentCompanyPossibilities[i].getStudent().getName())){
+          return studentCompanyPossibilities[i];
+        }
+        if (leastAccepted == null) {
+          leastAccepted = studentCompanyPossibilities[i];
+        } else {
+          if (leastAccepted.getStudent().getCompanies().length
+              > studentCompanyPossibilities[i].getStudent().getCompanies().length) {
+            leastAccepted = studentCompanyPossibilities[i];
+          }
+          if (leastAccepted.getStudent().getCompanies().length
+              == studentCompanyPossibilities[i].getStudent().getCompanies().length) {
+            if (studentCompanyPossibilities[i].getCompany().getPanels()
+                > leastAccepted.getCompany().getPanels()) {
+              leastAccepted = studentCompanyPossibilities[i];
+            }
+          }
+        }
+      }
+    }
+    return leastAccepted;
+  }
+
+  static boolean containsUs(String name){
+    if(name.contains("Tharsanan Kurukulasingam") || name.contains("Christkiran Sathiyananthadevan") || name.contains("Braveen Sritharan") || name.contains("Ramesh Kiroshkumar")){
+      return true;
+    }
+    return false;
+  }
+
   public boolean isValid(Assignment assignment) {
     for (Assignment assignmentLocal : assignments) {
       if (assignment
@@ -244,5 +283,44 @@ public class Scheduler {
       }
     }
     return true;
+  }
+
+  static ArrayList<StudentCompany> modifyAssignmentPriority(ArrayList<StudentCompany> originalList, ArrayList<StudentCompany> apeList){
+    int count = 0;
+    for (int i=0; i<apeList.size(); i++ ) {
+      for (int j=0;j<originalList.size(); j++) {
+
+        if(originalList.get(j).getCompany().getName().equals(apeList.get(i).getCompany().getName()) &&
+            originalList.get(j).getStudent().getName().equals(apeList.get(i).getStudent().getName())){
+          StudentCompany temp = originalList.get(j);
+          originalList.remove(originalList.get(j));
+          originalList.add(count, temp);
+          count++;
+        }
+      }
+    }
+    return originalList;
+  }
+
+  static ArrayList<StudentCompany> createOrder(){
+    String tharsanan[] = { "Enactor" ,"WSO2_Ballerina", "WSO2_Choreo", "Codify", "WSO2_OB" , "Virtusa", "Cloud Solution", "Creative Software"};
+    String christkiran[] = {"Enactor", "WSO2_Choreo", "Virtusa", "WSO2_Ballerina", "Cloud Solutions International"};
+    String braveen[] = {"Synergen Health", "WSO2_Ballerina", "Creative Software", "Accerlero", "Yaala Labs"};
+    String kirosh[] = {"Virtusa", "WSO2_Ballerina", "Enactor", "Creative Software", "99X Technology", "WSO2_OB"};
+
+    ArrayList<StudentCompany> apeList = new ArrayList<>();
+    for (String company_name:tharsanan) {
+      apeList.add(new StudentCompany(new Student("Tharsanan Kurukulasingam",null), new Company(company_name,0,0)));
+    }
+    for (String company_name:christkiran) {
+      apeList.add(new StudentCompany(new Student("Christkiran Sathiyananthadevan",null), new Company(company_name,0,0)));
+    }
+    for (String company_name:braveen) {
+      apeList.add(new StudentCompany(new Student("Braveen Sritharan",null), new Company(company_name,0,0)));
+    }
+    for (String company_name:kirosh) {
+      apeList.add(new StudentCompany(new Student("Ramesh Kiroshkumar",null), new Company(company_name,0,0)));
+    }
+    return apeList;
   }
 }
